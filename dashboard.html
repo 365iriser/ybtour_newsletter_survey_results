@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>노랑풍선 설문 응답 대시보드</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --yb:#FFD200;--ybl:#FFF9D6;--ybd:#8a6800;
+  --dark:#111;--text:#333;--sub:#777;
+  --bg:#F0EFEB;--card:#fff;--border:#E6E3DC;
+  --red:#FF4D4D;--green:#2DBD6E;--blue:#4A90E2;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* top bar */
+.topbar{background:#111;height:54px;display:flex;align-items:center;padding:0 24px;gap:14px;position:sticky;top:0;z-index:100;}
+.topbar-logo{color:var(--yb);font-weight:800;font-size:15px;display:flex;align-items:center;gap:7px;}
+.topbar-logo-dot{width:9px;height:9px;background:var(--yb);border-radius:50%;}
+.topbar-div{width:1px;height:22px;background:#333;}
+.topbar-title{color:#888;font-size:12px;flex:1;}
+.tbtn{padding:6px 14px;border-radius:18px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;border:none;transition:all .15s;}
+.tbtn-ghost{background:transparent;color:#aaa;border:1px solid #444;}
+.tbtn-ghost:hover{border-color:var(--yb);color:var(--yb);}
+.tbtn-yellow{background:var(--yb);color:#000;}
+.tbtn-yellow:hover{box-shadow:0 4px 14px rgba(255,210,0,.4);}
+.tbtn-red{background:transparent;color:#ff6b6b;border:1px solid #444;}
+.tbtn-red:hover{border-color:#ff4d4d;color:#ff4d4d;}
+
+/* config banner */
+.config-banner{background:#fff8e0;border-bottom:1px solid #ffe066;padding:10px 24px;display:flex;align-items:center;gap:10px;font-size:12px;color:#7a5c00;}
+.config-banner input{flex:1;padding:6px 10px;border:1px solid #ffe066;border-radius:6px;font-size:12px;font-family:inherit;background:#fff;color:#333;max-width:520px;}
+.config-banner input:focus{outline:none;border-color:var(--yb);}
+.config-banner.hidden{display:none;}
+
+/* layout */
+.layout{display:flex;min-height:calc(100vh - 54px);}
+.sidebar{width:200px;background:#fff;border-right:1px solid var(--border);flex-shrink:0;padding:16px 0;}
+.sidebar-item{display:flex;align-items:center;gap:8px;padding:9px 18px;font-size:12px;font-weight:600;color:var(--sub);cursor:pointer;transition:all .15s;border-left:3px solid transparent;}
+.sidebar-item:hover{background:#fafaf7;color:var(--dark);}
+.sidebar-item.on{color:var(--dark);border-left-color:var(--yb);background:var(--ybl);}
+.sidebar-item .icon{font-size:14px;}
+.sidebar-divider{height:1px;background:var(--border);margin:10px 14px;}
+.main{flex:1;overflow:auto;padding:24px;}
+
+/* section titles */
+.panel{display:none;}.panel.on{display:block;}
+.panel-title{font-size:18px;font-weight:800;color:var(--dark);margin-bottom:4px;}
+.panel-sub{font-size:12px;color:var(--sub);margin-bottom:24px;}
+
+/* stat cards */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:28px;}
+.stat-card{background:var(--card);border-radius:12px;padding:18px 20px;border:1px solid var(--border);}
+.stat-label{font-size:11px;font-weight:600;color:var(--sub);letter-spacing:.5px;margin-bottom:6px;}
+.stat-num{font-size:30px;font-weight:800;color:var(--dark);line-height:1;}
+.stat-sub{font-size:11px;color:var(--sub);margin-top:5px;}
+.stat-card.accent{background:var(--yb);border-color:var(--yb);}
+.stat-card.accent .stat-label,.stat-card.accent .stat-sub{color:rgba(0,0,0,.55);}
+.stat-card.accent .stat-num{color:#000;}
+
+/* charts */
+.charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:24px;}
+.chart-card{background:var(--card);border-radius:12px;padding:20px;border:1px solid var(--border);}
+.chart-title{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:16px;display:flex;align-items:center;gap:6px;}
+.chart-title-icon{font-size:16px;}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.bar-lbl{font-size:11px;color:#555;width:130px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3;}
+.bar-wrap{flex:1;position:relative;}
+.bar-track{height:16px;background:#f0eeea;border-radius:20px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:20px;transition:width .6s cubic-bezier(.34,1.1,.64,1);}
+.bar-fill.type-1{background:var(--yb);}
+.bar-fill.type-2{background:#4A90E2;}
+.bar-fill.type-3{background:#2DBD6E;}
+.bar-fill.type-4{background:#9B59B6;}
+.bar-fill.type-5{background:#E67E22;}
+.bar-fill.type-6{background:#E74C3C;}
+.bar-fill.type-7{background:#1ABC9C;}
+.bar-fill.type-8{background:#F39C12;}
+.bar-pct{font-size:10px;color:var(--sub);width:36px;text-align:right;flex-shrink:0;}
+.bar-cnt{font-size:10px;font-weight:600;color:#888;width:24px;text-align:right;flex-shrink:0;}
+.no-data-chart{text-align:center;padding:30px 0;font-size:12px;color:#ccc;}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:20px;}
+.donut-svg{flex-shrink:0;}
+.donut-legend{flex:1;}
+.donut-legend-item{display:flex;align-items:center;gap:6px;margin-bottom:7px;font-size:11px;color:#555;}
+.donut-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+
+/* satisfaction */
+.sat-display{text-align:center;padding:8px 0 16px;}
+.sat-num{font-size:48px;font-weight:800;color:var(--dark);line-height:1;}
+.sat-stars{font-size:22px;letter-spacing:2px;margin:6px 0;}
+.sat-label{font-size:12px;color:var(--sub);}
+.sat-bars{margin-top:12px;}
+.sat-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.sat-star-lbl{font-size:11px;color:#888;width:28px;}
+
+/* response list */
+.resp-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
+.filter-btn{padding:5px 12px;border-radius:14px;font-size:11px;font-weight:600;border:1px solid var(--border);background:var(--card);color:var(--sub);cursor:pointer;transition:all .15s;}
+.filter-btn.on{background:var(--yb);border-color:var(--yb);color:#000;}
+.resp-count{font-size:12px;color:var(--sub);margin-left:auto;}
+.resp-table-wrap{background:var(--card);border-radius:12px;border:1px solid var(--border);overflow:hidden;}
+.resp-table{width:100%;border-collapse:collapse;font-size:12px;}
+.resp-table th{background:#fafaf7;padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.4px;border-bottom:1px solid var(--border);white-space:nowrap;}
+.resp-table td{padding:11px 14px;border-bottom:1px solid #f5f3ee;vertical-align:top;line-height:1.5;}
+.resp-table tr:last-child td{border-bottom:none;}
+.resp-table tr:hover td{background:#fafaf7;}
+.tag{display:inline-block;background:#f0eeea;color:#555;font-size:10px;padding:2px 7px;border-radius:6px;margin:1px 2px 1px 0;}
+.tag.hl{background:var(--ybl);color:var(--ybd);}
+.tag.blue{background:#EBF3FF;color:#2563eb;}
+.detail-btn{padding:3px 8px;border-radius:8px;border:1px solid var(--border);background:#fff;font-size:10px;color:#666;cursor:pointer;font-family:inherit;transition:all .15s;}
+.detail-btn:hover{border-color:var(--yb);color:#000;}
+.resp-stars-s{color:#ffd200;font-size:11px;}
+
+/* detail modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal{background:#fff;border-radius:14px;width:560px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;}
+.modal-hd{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.modal-hd h3{font-size:15px;font-weight:700;}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:#aaa;line-height:1;}
+.modal-close:hover{color:#333;}
+.modal-body{flex:1;overflow-y:auto;padding:20px;}
+.modal-row{display:flex;gap:8px;margin-bottom:14px;align-items:flex-start;}
+.modal-label{font-size:11px;font-weight:700;color:var(--sub);width:100px;flex-shrink:0;padding-top:2px;}
+.modal-val{font-size:13px;color:var(--dark);flex:1;line-height:1.6;}
+.modal-val.comment{background:#fafaf7;border-radius:8px;padding:10px 12px;font-size:12px;color:#444;}
+.modal-ft{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;}
+
+/* empty state */
+.empty-state{text-align:center;padding:80px 20px;}
+.empty-icon{font-size:56px;margin-bottom:16px;opacity:.5;}
+.empty-title{font-size:16px;font-weight:700;color:var(--dark);margin-bottom:8px;}
+.empty-desc{font-size:13px;color:var(--sub);line-height:1.7;}
+.empty-url{display:inline-block;margin-top:16px;background:var(--ybl);color:var(--ybd);padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;font-family:monospace;word-break:break-all;}
+
+/* toast */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(8px);background:#111;color:#fff;padding:8px 18px;border-radius:18px;font-size:12px;opacity:0;transition:all .3s;pointer-events:none;z-index:9999;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo"><div class="topbar-logo-dot"></div>노랑풍선</div>
+  <div class="topbar-div"></div>
+  <span class="topbar-title">설문 응답 대시보드</span>
+  <button class="tbtn tbtn-ghost" onclick="toggleConfig()">⚙ 데이터 소스 설정</button>
+  <button class="tbtn tbtn-ghost" onclick="refreshData()">🔄 새로고침</button>
+  <button class="tbtn tbtn-ghost" onclick="exportCSV()">⬇ CSV 내보내기</button>
+  <button class="tbtn tbtn-red" onclick="clearAll()">🗑 전체 삭제</button>
+</div>
+
+<!-- 설정 배너 -->
+<div class="config-banner" id="config-banner">
+  <span>📡 Google Apps Script URL:</span>
+  <input type="url" id="config-url" placeholder="https://script.google.com/macros/s/.../exec" oninput="saveConfigUrl()">
+  <button class="tbtn tbtn-yellow" onclick="refreshData()">불러오기</button>
+  <span style="color:#aaa;font-size:11px;">URL 없으면 localStorage 사용</span>
+</div>
+
+<div class="layout">
+  <!-- sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-item on" onclick="switchPanel('overview',this)"><span class="icon">📊</span>개요</div>
+    <div class="sidebar-item" onclick="switchPanel('travel',this)"><span class="icon">✈️</span>여행 유형·테마</div>
+    <div class="sidebar-item" onclick="switchPanel('content',this)"><span class="icon">📰</span>콘텐츠 선호</div>
+    <div class="sidebar-item" onclick="switchPanel('satisfaction',this)"><span class="icon">⭐</span>만족도</div>
+    <div class="sidebar-item" onclick="switchPanel('demog',this)"><span class="icon">👤</span>응답자 정보</div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-item" onclick="switchPanel('responses',this)"><span class="icon">📋</span>개별 응답 목록</div>
+  </div>
+
+  <div class="main" id="main-content">
+    <!-- 개요 -->
+    <div class="panel on" id="panel-overview">
+      <div class="panel-title">📊 응답 개요</div>
+      <div class="panel-sub" id="overview-sub">데이터를 불러오는 중...</div>
+      <div class="stat-row" id="stat-row"></div>
+      <div class="charts-grid" id="overview-charts"></div>
+    </div>
+
+    <!-- 여행 유형·테마 -->
+    <div class="panel" id="panel-travel">
+      <div class="panel-title">✈️ 여행 유형 & 테마</div>
+      <div class="panel-sub">구독자들이 관심 있는 여행의 종류와 테마 분포예요.</div>
+      <div class="charts-grid" id="travel-charts"></div>
+    </div>
+
+    <!-- 콘텐츠 선호 -->
+    <div class="panel" id="panel-content">
+      <div class="panel-title">📰 콘텐츠 & 발행 빈도 선호</div>
+      <div class="panel-sub">어떤 형식의 콘텐츠를 얼마나 자주 받고 싶은지 확인해요.</div>
+      <div class="charts-grid" id="content-charts"></div>
+    </div>
+
+    <!-- 만족도 -->
+    <div class="panel" id="panel-satisfaction">
+      <div class="panel-title">⭐ 만족도 분석</div>
+      <div class="panel-sub">현재 뉴스레터에 대한 구독자 만족도예요.</div>
+      <div class="charts-grid" id="sat-charts"></div>
+      <div class="chart-card" id="opinion-card" style="margin-top:16px;">
+        <div class="chart-title"><span class="chart-title-icon">💌</span>희망 여행지 & 자유 의견</div>
+        <div id="opinions-list"></div>
+      </div>
+    </div>
+
+    <!-- 인구통계 -->
+    <div class="panel" id="panel-demog">
+      <div class="panel-title">👤 응답자 정보</div>
+      <div class="panel-sub">연령대와 동행 유형 분포예요.</div>
+      <div class="charts-grid" id="demog-charts"></div>
+    </div>
+
+    <!-- 개별 응답 -->
+    <div class="panel" id="panel-responses">
+      <div class="panel-title">📋 개별 응답 목록</div>
+      <div class="panel-sub">모든 응답을 개별로 확인할 수 있어요.</div>
+      <div class="resp-filters" id="resp-filters">
+        <button class="filter-btn on" onclick="filterResp('all',this)">전체</button>
+        <button class="filter-btn" onclick="filterResp('5star',this)">⭐ 5점</button>
+        <button class="filter-btn" onclick="filterResp('hasOpinion',this)">💬 의견 있음</button>
+        <button class="filter-btn" onclick="filterResp('hasDest',this)">🗺️ 여행지 요청</button>
+        <span class="resp-count" id="resp-count-label"></span>
+      </div>
+      <div class="resp-table-wrap">
+        <table class="resp-table" id="resp-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>응답일시</th>
+              <th>여행 유형</th>
+              <th>선호 콘텐츠</th>
+              <th>만족도</th>
+              <th>연령</th>
+              <th>상세</th>
+            </tr>
+          </thead>
+          <tbody id="resp-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 상세 모달 -->
+<div class="modal-bg" id="modal-detail">
+  <div class="modal">
+    <div class="modal-hd"><h3 id="modal-title">응답 상세</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-ft"><button class="tbtn tbtn-ghost" onclick="closeModal()">닫기</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+//  ★ 여기를 반드시 수정하세요 ★ (form.html과 동일한 URL)
+//  Google Apps Script 배포 URL을 붙여넣으세요.
+// ============================================================
+let APPS_SCRIPT_URL = localStorage.getItem('yb_dash_url') || '';
+// ============================================================
+
+let allResponses = [];
+let currentFilter = 'all';
+let configVisible = false;
+
+// 초기화
+window.onload = async () => {
+  if(APPS_SCRIPT_URL) document.getElementById('config-url').value = APPS_SCRIPT_URL;
+  await refreshData();
+};
+
+function saveConfigUrl(){
+  APPS_SCRIPT_URL = document.getElementById('config-url').value.trim();
+  localStorage.setItem('yb_dash_url', APPS_SCRIPT_URL);
+}
+
+function toggleConfig(){
+  configVisible=!configVisible;
+  document.getElementById('config-banner').classList.toggle('hidden',!configVisible);
+}
+
+async function refreshData(){
+  try{
+    let data = [];
+    if(APPS_SCRIPT_URL && APPS_SCRIPT_URL !== 'https://script.google.com/macros/s/AKfycbzV_b9dVJKZzss9E9AWWROtbFk4JAEokDHBeovikcb94fss4AO8_TCS8V8WuPQ4-TbG5A/exec'){
+      const res = await fetch(APPS_SCRIPT_URL + '?action=get');
+      data = await res.json();
+    } else {
+      // localStorage fallback
+      data = JSON.parse(localStorage.getItem('yb_survey_responses') || '[]');
+      // 문자열→배열 변환 (form.html에서 join()으로 저장된 경우)
+      data = data.map(r=>({
+        ...r,
+        travelType: typeof r.travelType === 'string' ? r.travelType.split(', ').filter(Boolean) : (r.travelType||[]),
+        travelTheme: typeof r.travelTheme === 'string' ? r.travelTheme.split(', ').filter(Boolean) : (r.travelTheme||[]),
+        travelWith: typeof r.travelWith === 'string' ? r.travelWith.split(', ').filter(Boolean) : (r.travelWith||[]),
+      }));
+    }
+    allResponses = data;
+    renderAll();
+    toast('✓ 데이터 업데이트 완료');
+  }catch(ex){
+    console.warn('데이터 로드 실패:', ex);
+    allResponses = JSON.parse(localStorage.getItem('yb_survey_responses') || '[]');
+    allResponses = allResponses.map(r=>({
+      ...r,
+      travelType: typeof r.travelType === 'string' ? r.travelType.split(', ').filter(Boolean) : (r.travelType||[]),
+      travelTheme: typeof r.travelTheme === 'string' ? r.travelTheme.split(', ').filter(Boolean) : (r.travelTheme||[]),
+      travelWith: typeof r.travelWith === 'string' ? r.travelWith.split(', ').filter(Boolean) : (r.travelWith||[]),
+    }));
+    renderAll();
+    toast('⚠ 로컬 데이터 사용 중');
+  }
+}
+
+function renderAll(){
+  const total = allResponses.length;
+  renderOverview(total);
+  renderTravelCharts();
+  renderContentCharts();
+  renderSatisfaction();
+  renderDemog();
+  renderResponses();
+}
+
+// ── 유틸 ──
+function countMap(field){
+  const map={};
+  allResponses.forEach(r=>{
+    const val=r[field];
+    const arr=Array.isArray(val)?val:(val?[val]:[]);
+    arr.forEach(v=>{if(v)map[v]=(map[v]||0)+1;});
+  });
+  return Object.entries(map).sort((a,b)=>b[1]-a[1]);
+}
+
+function buildBars(entries, colorClass='type-1', maxShow=10){
+  if(!entries.length) return '<div class="no-data-chart">📭 응답 없음</div>';
+  const topEntries = entries.slice(0,maxShow);
+  const maxVal = topEntries[0]?.[1]||1;
+  const colors = ['type-1','type-2','type-3','type-4','type-5','type-6','type-7','type-8'];
+  return topEntries.map(([lbl,cnt],i)=>{
+    const pct = Math.round(cnt/allResponses.length*100);
+    const w = Math.round(cnt/maxVal*100);
+    const cc = Array.isArray(colorClass)?colors[i%colors.length]:colorClass;
+    return `<div class="bar-row">
+      <div class="bar-lbl" title="${lbl}">${lbl}</div>
+      <div class="bar-wrap"><div class="bar-track"><div class="bar-fill ${cc}" style="width:${w}%"></div></div></div>
+      <div class="bar-pct">${pct}%</div>
+      <div class="bar-cnt">${cnt}</div>
+    </div>`;
+  }).join('');
+}
+
+function chartCard(icon, title, innerHTML){
+  return `<div class="chart-card"><div class="chart-title"><span class="chart-title-icon">${icon}</span>${title}</div>${innerHTML}</div>`;
+}
+
+// ── 개요 ──
+function renderOverview(total){
+  const rated = allResponses.filter(r=>r.satisfaction>0);
+  const avg = rated.length ? (rated.reduce((s,r)=>s+(+r.satisfaction),0)/rated.length).toFixed(1) : '—';
+  const withOpinion = allResponses.filter(r=>r.freeDest||r.freeOpinion).length;
+  const today = allResponses.filter(r=>{
+    const d=new Date(r.ts);const n=new Date();
+    return d.toDateString()===n.toDateString();
+  }).length;
+
+  document.getElementById('overview-sub').textContent =
+    total ? `총 ${total}개의 응답이 수집되었어요.` : '아직 응답이 없어요. form.html을 배포하고 구독자에게 공유해 보세요!';
+
+  document.getElementById('stat-row').innerHTML = `
+    <div class="stat-card accent"><div class="stat-label">총 응답 수</div><div class="stat-num">${total}</div><div class="stat-sub">누적</div></div>
+    <div class="stat-card"><div class="stat-label">평균 만족도</div><div class="stat-num">${avg}</div><div class="stat-sub">${avg!=='—'?'⭐'.repeat(Math.round(+avg)):'-'}</div></div>
+    <div class="stat-card"><div class="stat-label">오늘 응답</div><div class="stat-num">${today}</div><div class="stat-sub">건</div></div>
+    <div class="stat-card"><div class="stat-label">의견 작성</div><div class="stat-num">${withOpinion}</div><div class="stat-sub">${total?Math.round(withOpinion/total*100):0}%</div></div>
+  `;
+
+  if(!total){
+    document.getElementById('overview-charts').innerHTML=`
+      <div class="empty-state" style="grid-column:1/-1;">
+        <div class="empty-icon">📭</div>
+        <div class="empty-title">아직 응답이 없어요</div>
+        <div class="empty-desc">form.html을 배포하고 구독자에게 공유하면<br>이곳에서 실시간으로 결과를 확인할 수 있어요.</div>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('overview-charts').innerHTML =
+    chartCard('✈️','여행 유형 Top 5', buildBars(countMap('travelType').slice(0,5))) +
+    chartCard('🎯','관심 테마 Top 5', buildBars(countMap('travelTheme').slice(0,5),'type-2')) +
+    chartCard('📰','선호 콘텐츠 형식', buildBars(countMap('contentType'),'type-3')) +
+    chartCard('📅','발행 빈도 선호', buildBars(countMap('freqPref'),'type-4'));
+}
+
+// ── 여행 유형·테마 ──
+function renderTravelCharts(){
+  document.getElementById('travel-charts').innerHTML =
+    chartCard('✈️','여행 유형', buildBars(countMap('travelType'), true ? ['type-1','type-2','type-3','type-4','type-5','type-6','type-7','type-8'] : 'type-1')) +
+    chartCard('🎯','여행 테마', buildBars(countMap('travelTheme'),['type-2','type-3','type-4','type-5','type-6','type-7','type-8','type-1']));
+}
+
+// ── 콘텐츠·빈도 ──
+function renderContentCharts(){
+  document.getElementById('content-charts').innerHTML =
+    chartCard('📰','선호 콘텐츠 형식', buildBars(countMap('contentType'),'type-3')) +
+    chartCard('📅','발행 빈도 선호', buildBars(countMap('freqPref'),'type-4'));
+}
+
+// ── 만족도 ──
+function renderSatisfaction(){
+  const rated = allResponses.filter(r=>r.satisfaction>0);
+  const avg = rated.length ? (rated.reduce((s,r)=>s+(+r.satisfaction),0)/rated.length).toFixed(1) : null;
+
+  const satDist=[5,4,3,2,1].map(n=>{
+    const cnt=rated.filter(r=>(+r.satisfaction)===n).length;
+    return {n,cnt,pct:rated.length?Math.round(cnt/rated.length*100):0};
+  });
+
+  const satHTML = avg ? `
+    <div class="sat-display">
+      <div class="sat-num">${avg}</div>
+      <div class="sat-stars">${'⭐'.repeat(Math.round(+avg))}</div>
+      <div class="sat-label">${rated.length}명이 응답 (전체 ${allResponses.length}명)</div>
+    </div>
+    <div class="sat-bars">
+      ${satDist.map(({n,cnt,pct})=>`
+        <div class="bar-row">
+          <div class="bar-lbl" style="width:32px;text-align:right;">${n}점</div>
+          <div class="bar-wrap"><div class="bar-track"><div class="bar-fill type-1" style="width:${pct}%"></div></div></div>
+          <div class="bar-pct">${pct}%</div>
+          <div class="bar-cnt">${cnt}</div>
+        </div>`).join('')}
+    </div>` : '<div class="no-data-chart">📭 만족도 응답 없음</div>';
+
+  document.getElementById('sat-charts').innerHTML = chartCard('⭐','만족도 분포', satHTML);
+
+  // 의견 목록
+  const withText = allResponses.filter(r=>r.freeDest||r.freeOpinion);
+  document.getElementById('opinions-list').innerHTML = withText.length
+    ? withText.map(r=>`
+        <div style="border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;background:#fafaf7;">
+          <div style="font-size:10px;color:#bbb;margin-bottom:8px;">${fmtDate(r.ts)} · ${r.ageGroup||'연령 미입력'} · ${[...(Array.isArray(r.travelType)?r.travelType:[r.travelType].filter(Boolean))].slice(0,2).join(', ')||'유형 미입력'}</div>
+          ${r.freeDest?`<div style="margin-bottom:6px;"><span style="font-size:10px;font-weight:700;color:var(--sub);">🗺️ 희망 여행지·소재</span><p style="font-size:12px;color:#333;margin-top:4px;line-height:1.6;">${escHTML(r.freeDest)}</p></div>`:''}
+          ${r.freeOpinion?`<div><span style="font-size:10px;font-weight:700;color:var(--sub);">💬 자유 의견</span><p style="font-size:12px;color:#333;margin-top:4px;line-height:1.6;">${escHTML(r.freeOpinion)}</p></div>`:''}
+        </div>`).join('')
+    : '<div class="no-data-chart">💬 작성된 의견 없음</div>';
+}
+
+// ── 인구통계 ──
+function renderDemog(){
+  document.getElementById('demog-charts').innerHTML =
+    chartCard('🎂','연령대', buildBars(countMap('ageGroup'),'type-2')) +
+    chartCard('👥','동행 유형', buildBars(countMap('travelWith'),'type-5'));
+}
+
+// ── 개별 응답 ──
+function filterResp(type, btn){
+  currentFilter=type;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderResponses();
+}
+
+function renderResponses(){
+  let data = [...allResponses];
+  if(currentFilter==='5star') data=data.filter(r=>(+r.satisfaction)===5);
+  else if(currentFilter==='hasOpinion') data=data.filter(r=>r.freeOpinion);
+  else if(currentFilter==='hasDest') data=data.filter(r=>r.freeDest);
+
+  document.getElementById('resp-count-label').textContent = `${data.length}개 표시`;
+
+  if(!data.length){
+    document.getElementById('resp-tbody').innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:#ccc;font-size:13px;">📭 해당하는 응답이 없어요</td></tr>`;
+    return;
+  }
+
+  document.getElementById('resp-tbody').innerHTML = data.map((r,i)=>{
+    const idx = allResponses.length - allResponses.indexOf(r);
+    const types = (Array.isArray(r.travelType)?r.travelType:[]).slice(0,2).map(t=>`<span class="tag hl">${t}</span>`).join('');
+    const stars = r.satisfaction ? '<span class="resp-stars-s">'+'⭐'.repeat(+r.satisfaction)+'</span>' : '—';
+    return `<tr>
+      <td style="color:#bbb;font-size:10px;">#${idx}</td>
+      <td style="white-space:nowrap;font-size:11px;color:var(--sub);">${fmtDate(r.ts)}</td>
+      <td>${types||'<span class="tag">미입력</span>'}</td>
+      <td>${r.contentType?`<span class="tag blue">${r.contentType}</span>`:'—'}</td>
+      <td>${stars}</td>
+      <td>${r.ageGroup?`<span class="tag">${r.ageGroup}</span>`:'—'}</td>
+      <td><button class="detail-btn" onclick='openDetail(${JSON.stringify(JSON.stringify(r))})'>상세보기</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function openDetail(jsonStr){
+  const r = JSON.parse(jsonStr);
+  document.getElementById('modal-title').textContent = `응답 #${allResponses.length - allResponses.findIndex(x=>x.id===r.id)}`;
+  const types = (Array.isArray(r.travelType)?r.travelType:[]).map(t=>`<span class="tag hl">${t}</span>`).join('');
+  const themes = (Array.isArray(r.travelTheme)?r.travelTheme:[]).map(t=>`<span class="tag">${t}</span>`).join('');
+  const tw = (Array.isArray(r.travelWith)?r.travelWith:[]).map(t=>`<span class="tag">${t}</span>`).join('');
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-row"><div class="modal-label">응답일시</div><div class="modal-val">${fmtDate(r.ts)}</div></div>
+    <div class="modal-row"><div class="modal-label">여행 유형</div><div class="modal-val">${types||'미입력'}</div></div>
+    <div class="modal-row"><div class="modal-label">여행 테마</div><div class="modal-val">${themes||'미입력'}</div></div>
+    <div class="modal-row"><div class="modal-label">선호 콘텐츠</div><div class="modal-val">${r.contentType?`<span class="tag blue">${r.contentType}</span>`:'미입력'}</div></div>
+    <div class="modal-row"><div class="modal-label">발행 빈도</div><div class="modal-val">${r.freqPref||'미입력'}</div></div>
+    <div class="modal-row"><div class="modal-label">만족도</div><div class="modal-val">${r.satisfaction?'⭐'.repeat(+r.satisfaction)+' ('+r.satisfaction+'점)':'미입력'}</div></div>
+    <div class="modal-row"><div class="modal-label">연령대</div><div class="modal-val">${r.ageGroup||'미입력'}</div></div>
+    <div class="modal-row"><div class="modal-label">동행 유형</div><div class="modal-val">${tw||'미입력'}</div></div>
+    ${r.freeDest?`<div class="modal-row"><div class="modal-label">희망 여행지</div><div class="modal-val comment">${escHTML(r.freeDest)}</div></div>`:''}
+    ${r.freeOpinion?`<div class="modal-row"><div class="modal-label">자유 의견</div><div class="modal-val comment">${escHTML(r.freeOpinion)}</div></div>`:''}
+  `;
+  document.getElementById('modal-detail').classList.add('show');
+}
+function closeModal(){document.getElementById('modal-detail').classList.remove('show');}
+document.getElementById('modal-detail').addEventListener('click',e=>{if(e.target===document.getElementById('modal-detail'))closeModal();});
+
+// ── 패널 전환 ──
+function switchPanel(name, el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.sidebar-item').forEach(s=>s.classList.remove('on'));
+  document.getElementById('panel-'+name).classList.add('on');
+  el.classList.add('on');
+}
+
+// ── CSV ──
+function exportCSV(){
+  if(!allResponses.length){toast('내보낼 응답이 없어요');return;}
+  const headers=['번호','응답일시','여행유형','여행테마','선호콘텐츠','발행빈도','만족도','희망여행지','자유의견','연령대','동행유형'];
+  const rows=allResponses.map((r,i)=>[
+    allResponses.length-i,
+    fmtDate(r.ts),
+    (Array.isArray(r.travelType)?r.travelType:[r.travelType]).filter(Boolean).join('/'),
+    (Array.isArray(r.travelTheme)?r.travelTheme:[r.travelTheme]).filter(Boolean).join('/'),
+    r.contentType||'',
+    r.freqPref||'',
+    r.satisfaction||'',
+    r.freeDest||'',
+    r.freeOpinion||'',
+    r.ageGroup||'',
+    (Array.isArray(r.travelWith)?r.travelWith:[r.travelWith]).filter(Boolean).join('/'),
+  ].map(c=>`"${String(c).replace(/"/g,'""')}"`).join(','));
+  const csv='\uFEFF'+[headers.join(','),...rows].join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`ybtour_survey_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  toast('✓ CSV 다운로드 완료');
+}
+
+function clearAll(){
+  if(!confirm('모든 응답 데이터를 삭제할까요?\n이 작업은 되돌릴 수 없어요.\n(Google Sheets 데이터는 직접 삭제해 주세요)'))return;
+  localStorage.removeItem('yb_survey_responses');
+  allResponses=[];
+  renderAll();
+  toast('로컬 데이터가 삭제되었어요');
+}
+
+function fmtDate(ts){
+  const d=new Date(ts);
+  return`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function escHTML(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2400);}
+</script>
+</body>
+</html>

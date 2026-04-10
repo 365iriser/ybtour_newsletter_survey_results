@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>노랑풍선 뉴스레터 소재 설문</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ─── 설정 안내 ───────────────────────────────────────────
+   APPS_SCRIPT_URL 을 본인의 Google Apps Script 배포 URL로 교체하세요.
+   자세한 방법은 README.md 또는 아래 주석을 참고하세요.
+──────────────────────────────────────────────────────── */
+:root{
+  --yb:#FFD200;--ybl:#FFF9D6;--ybd:#8a6800;
+  --dark:#111;--text:#333;--sub:#888;--border:#E8E5DC;
+  --bg:#F5F3EE;--card:#fff;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.page{max-width:640px;margin:0 auto;padding:40px 20px 80px;}
+.hd{text-align:center;margin-bottom:48px;}
+.hd-logo{display:inline-flex;align-items:center;gap:8px;margin-bottom:24px;}
+.hd-logo-dot{width:10px;height:10px;background:var(--yb);border-radius:50%;}
+.hd-logo-txt{font-size:13px;font-weight:700;color:var(--dark);letter-spacing:1px;}
+.hd-badge{display:inline-block;background:var(--ybl);color:var(--ybd);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:.5px;margin-bottom:16px;}
+.hd h1{font-size:26px;font-weight:800;color:var(--dark);line-height:1.35;margin-bottom:12px;}
+.hd p{font-size:14px;color:var(--sub);line-height:1.8;}
+.prog-wrap{margin-bottom:40px;}
+.prog-labels{display:flex;justify-content:space-between;margin-bottom:8px;}
+.prog-label{font-size:11px;color:var(--sub);}
+.prog-bar{height:4px;background:#E8E5DC;border-radius:4px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--yb);border-radius:4px;transition:width .4s ease;}
+.step{display:none;}
+.step.active{display:block;}
+.sec{background:var(--card);border-radius:16px;padding:28px 24px;margin-bottom:16px;border:1px solid var(--border);}
+.sec-title{font-size:16px;font-weight:700;color:var(--dark);margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+.sec-emoji{font-size:20px;}
+.sec-desc{font-size:12px;color:var(--sub);margin-bottom:20px;line-height:1.6;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px;}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:24px;border:1.5px solid var(--border);font-size:13px;font-weight:500;color:#555;cursor:pointer;transition:all .18s;user-select:none;background:#fff;}
+.chip:hover{border-color:var(--yb);color:var(--dark);}
+.chip.sel{border-color:var(--yb);background:var(--ybl);color:var(--dark);font-weight:600;}
+.chip-icon{font-size:15px;}
+.radios{display:flex;flex-direction:column;gap:10px;}
+.radio-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:10px;border:1.5px solid var(--border);cursor:pointer;transition:all .18s;background:#fff;}
+.radio-row:hover{border-color:var(--yb);}
+.radio-row.sel{border-color:var(--yb);background:var(--ybl);}
+.radio-row input{display:none;}
+.radio-dot{width:16px;height:16px;border-radius:50%;border:2px solid #ccc;flex-shrink:0;transition:all .18s;display:flex;align-items:center;justify-content:center;}
+.radio-row.sel .radio-dot{border-color:var(--yb);background:var(--yb);}
+.radio-dot::after{content:'';width:6px;height:6px;border-radius:50%;background:#fff;display:none;}
+.radio-row.sel .radio-dot::after{display:block;}
+.radio-label{font-size:13px;font-weight:500;color:#444;line-height:1.4;}
+.radio-sub{font-size:11px;color:var(--sub);margin-top:1px;}
+textarea.field{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;color:var(--text);resize:vertical;min-height:80px;background:#fafaf7;transition:border-color .15s;}
+textarea.field:focus{outline:none;border-color:var(--yb);background:#fff;}
+.stars{display:flex;gap:6px;margin-top:4px;}
+.star{font-size:28px;cursor:pointer;opacity:.25;transition:opacity .15s,transform .15s;}
+.star.on{opacity:1;}
+.star:hover{transform:scale(1.15);}
+.nav{display:flex;gap:10px;margin-top:32px;}
+.btn{flex:1;padding:14px;border-radius:12px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;border:none;transition:all .18s;}
+.btn-back{background:#f0eeea;color:#555;}
+.btn-back:hover{background:#e8e5dc;}
+.btn-next{background:var(--yb);color:var(--dark);}
+.btn-next:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(255,210,0,.4);}
+.btn-submit{background:var(--dark);color:var(--yb);}
+.btn-submit:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.2);}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.step-dots{display:flex;gap:6px;justify-content:center;margin-bottom:32px;}
+.step-dot{width:8px;height:8px;border-radius:50%;background:#E8E5DC;transition:all .25s;}
+.step-dot.on{background:var(--yb);width:24px;border-radius:4px;}
+.step-dot.done{background:#FFE066;}
+.success{display:none;text-align:center;padding:60px 20px;}
+.success.show{display:block;}
+.success-icon{font-size:64px;margin-bottom:20px;animation:pop .5s cubic-bezier(.34,1.56,.64,1);}
+@keyframes pop{from{transform:scale(0);}to{transform:scale(1);}}
+.success h2{font-size:22px;font-weight:800;color:var(--dark);margin-bottom:12px;}
+.success p{font-size:14px;color:var(--sub);line-height:1.8;margin-bottom:28px;}
+.success-card{background:var(--ybl);border-radius:14px;padding:20px 24px;margin-bottom:28px;text-align:left;}
+.success-card p{font-size:13px;color:var(--ybd);line-height:1.9;}
+.btn-home{display:inline-block;padding:14px 36px;background:var(--yb);color:var(--dark);font-weight:700;font-size:14px;border-radius:12px;text-decoration:none;transition:all .18s;}
+.btn-home:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(255,210,0,.4);}
+.submit-loading{display:none;text-align:center;padding:40px;}
+.submit-loading.show{display:block;}
+.spinner{width:40px;height:40px;border:3px solid #f0eeea;border-top-color:var(--yb);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="hd" id="form-hd">
+    <div class="hd-logo"><div class="hd-logo-dot"></div><span class="hd-logo-txt">YBTOUR NEWSLETTER</span></div>
+    <div class="hd-badge">📋 구독자 의견 설문</div>
+    <h1>어떤 여행 이야기가<br>듣고 싶으세요?</h1>
+    <p>노랑풍선 뉴스레터를 더 좋게 만들고 싶어요.<br>딱 2분만 투자해 주시면, 취향 저격 콘텐츠로 찾아올게요!</p>
+  </div>
+
+  <div id="form-wrap">
+    <div class="step-dots" id="dots"></div>
+    <div class="prog-wrap">
+      <div class="prog-labels"><span class="prog-label" id="prog-txt">1 / 4단계</span><span class="prog-label" id="prog-pct">0%</span></div>
+      <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="step active" id="step-1">
+      <div class="sec">
+        <div class="sec-title"><span class="sec-emoji">✈️</span>어떤 여행을 주로 즐기시나요?</div>
+        <div class="sec-desc">중복 선택 가능해요</div>
+        <div class="chips" id="travel-type">
+          <div class="chip" data-v="국내여행"><span class="chip-icon">🇰🇷</span>국내여행</div>
+          <div class="chip" data-v="아시아 단거리"><span class="chip-icon">🏯</span>아시아 단거리</div>
+          <div class="chip" data-v="동남아"><span class="chip-icon">🌴</span>동남아</div>
+          <div class="chip" data-v="유럽"><span class="chip-icon">🗼</span>유럽</div>
+          <div class="chip" data-v="미주/남미"><span class="chip-icon">🗽</span>미주/남미</div>
+          <div class="chip" data-v="중동/아프리카"><span class="chip-icon">🌍</span>중동/아프리카</div>
+          <div class="chip" data-v="크루즈"><span class="chip-icon">🚢</span>크루즈</div>
+          <div class="chip" data-v="허니문"><span class="chip-icon">💍</span>허니문</div>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-title"><span class="sec-emoji">🎯</span>관심 있는 여행 테마는요?</div>
+        <div class="sec-desc">중복 선택 가능해요</div>
+        <div class="chips" id="travel-theme">
+          <div class="chip" data-v="역사·문화탐방"><span class="chip-icon">🏛️</span>역사·문화탐방</div>
+          <div class="chip" data-v="맛집·미식여행"><span class="chip-icon">🍜</span>맛집·미식여행</div>
+          <div class="chip" data-v="자연·힐링"><span class="chip-icon">🌿</span>자연·힐링</div>
+          <div class="chip" data-v="액티비티·모험"><span class="chip-icon">🧗</span>액티비티·모험</div>
+          <div class="chip" data-v="도심·쇼핑"><span class="chip-icon">🛍️</span>도심·쇼핑</div>
+          <div class="chip" data-v="사진여행"><span class="chip-icon">📸</span>사진여행</div>
+          <div class="chip" data-v="럭셔리여행"><span class="chip-icon">✨</span>럭셔리여행</div>
+          <div class="chip" data-v="가성비여행"><span class="chip-icon">💸</span>가성비여행</div>
+          <div class="chip" data-v="가족여행"><span class="chip-icon">👨‍👩‍👧</span>가족여행</div>
+          <div class="chip" data-v="혼자여행"><span class="chip-icon">🧍</span>혼자여행</div>
+        </div>
+      </div>
+      <div class="nav"><button class="btn btn-next" onclick="nextStep()">다음 →</button></div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step" id="step-2">
+      <div class="sec">
+        <div class="sec-title"><span class="sec-emoji">📰</span>어떤 콘텐츠 형식이 좋으세요?</div>
+        <div class="sec-desc">가장 좋아하는 형식을 하나 골라주세요</div>
+        <div class="radios" id="content-type">
+          <label class="radio-row" onclick="pickRadio(this,'content-type')"><input type="radio" name="ct" value="여행지 심층 소개"><div class="radio-dot"></div><div><div class="radio-label">🗺️ 여행지 심층 소개</div><div class="radio-sub">한 도시/지역을 깊게 파헤치는 콘텐츠</div></div></label>
+          <label class="radio-row" onclick="pickRadio(this,'content-type')"><input type="radio" name="ct" value="여행 꿀팁·정보"><div class="radio-dot"></div><div><div class="radio-label">💡 여행 꿀팁·정보</div><div class="radio-sub">비자, 환율, 짐싸기 등 실용 정보</div></div></label>
+          <label class="radio-row" onclick="pickRadio(this,'content-type')"><input type="radio" name="ct" value="트렌드·이슈"><div class="radio-dot"></div><div><div class="radio-label">🔥 트렌드·이슈</div><div class="radio-sub">요즘 핫한 여행지·테마 트렌드</div></div></label>
+          <label class="radio-row" onclick="pickRadio(this,'content-type')"><input type="radio" name="ct" value="에디터 경험담"><div class="radio-dot"></div><div><div class="radio-label">✍️ 에디터 경험담</div><div class="radio-sub">실제 다녀온 여행 후기와 감상</div></div></label>
+          <label class="radio-row" onclick="pickRadio(this,'content-type')"><input type="radio" name="ct" value="추천 상품·패키지"><div class="radio-dot"></div><div><div class="radio-label">🎁 추천 상품·패키지</div><div class="radio-sub">노랑풍선 추천 여행 상품 소개</div></div></label>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-title"><span class="sec-emoji">📅</span>뉴스레터를 얼마나 자주 받고 싶으세요?</div>
+        <div class="radios" id="freq-pref">
+          <label class="radio-row" onclick="pickRadio(this,'freq-pref')"><input type="radio" name="fp" value="주 1회"><div class="radio-dot"></div><div class="radio-label">주 1회 (매주 일정한 요일)</div></label>
+          <label class="radio-row" onclick="pickRadio(this,'freq-pref')"><input type="radio" name="fp" value="격주 1회"><div class="radio-dot"></div><div class="radio-label">격주 1회</div></label>
+          <label class="radio-row" onclick="pickRadio(this,'freq-pref')"><input type="radio" name="fp" value="월 1회"><div class="radio-dot"></div><div class="radio-label">월 1회로 충분해요</div></label>
+          <label class="radio-row" onclick="pickRadio(this,'freq-pref')"><input type="radio" name="fp" value="시즌별 이벤트 때만"><div class="radio-dot"></div><div class="radio-label">여행 시즌·이벤트 때만</div></label>
+        </div>
+      </div>
+      <div class="nav">
+        <button class="btn btn-back" onclick="prevStep()">← 이전</button>
+        <button class="btn btn-next" onclick="nextStep()">다음 →</button>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step" id="step-3">
+      <div class="sec">
+        <div class="sec-title"><span class="sec-emoji">⭐</span>현재 뉴스레터에 얼마나 만족하시나요?</div>
+        <div class="stars" id="stars">
+          <span class="star" data-v="1">⭐</span>
+          <span class="star" data-v="2">⭐</span>
+          <span class="star" data-v="3">⭐</span>
+          <span class="star" data-v="4">⭐</span>
+          <span class="star" data-v="5">⭐</span>
+        </div>
+        <div style="font-size:11px;color:var(--sub);margin-top:8px;" id="star-label">별을 클릭해 주세요 (선택)</div>
+      </div>
+      <div class="sec">
+        <div class="sec-title"><span class="sec-emoji">💌</span>꼭 다뤄줬으면 하는 여행지나 소재가 있나요?</div>
+        <div class="sec-desc">자유롭게 적어주세요. 최대한 반영할게요!</div>
+        <textarea class="field" id="free-dest" placeholder="예) 포르투갈 리스본, 국내 제주 올레길 코스, 시니어 여행 전용 콘텐츠 등"></textarea>
+      </div>
+      <div class="sec">
+        <div class="sec-title"><span class="sec-emoji">🙋</span>뉴스레터에 바라는 점이 있다면?</div>
+        <textarea class="field" id="free-opinion" placeholder="개선 의견, 칭찬, 아쉬운 점 뭐든 환영해요!"></textarea>
+      </div>
+      <div class="nav">
+        <button class="btn btn-back" onclick="prevStep()">← 이전</button>
+        <button class="btn btn-next" onclick="nextStep()">다음 →</button>
+      </div>
+    </div>
+
+    <!-- Step 4 (이메일/이벤트 없음) -->
+    <div class="step" id="step-4">
+      <div class="sec">
+        <div class="sec-title"><span class="sec-emoji">👤</span>마지막으로, 간단한 정보를 알려주세요</div>
+        <div class="sec-desc">선택 항목이에요. 더 나은 콘텐츠를 만드는 데 활용해요.</div>
+        <div style="margin-bottom:20px;">
+          <div style="font-size:12px;font-weight:600;color:var(--sub);margin-bottom:10px;">연령대</div>
+          <div class="chips">
+            <div class="chip" data-v="20대" data-group="age" onclick="pickChipSingle(this,'age')">20대</div>
+            <div class="chip" data-v="30대" data-group="age" onclick="pickChipSingle(this,'age')">30대</div>
+            <div class="chip" data-v="40대" data-group="age" onclick="pickChipSingle(this,'age')">40대</div>
+            <div class="chip" data-v="50대" data-group="age" onclick="pickChipSingle(this,'age')">50대</div>
+            <div class="chip" data-v="60대 이상" data-group="age" onclick="pickChipSingle(this,'age')">60대 이상</div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--sub);margin-bottom:10px;">주로 함께 여행하는 분</div>
+          <div class="chips" id="travel-with">
+            <div class="chip" data-v="혼자"><span class="chip-icon">🧍</span>혼자</div>
+            <div class="chip" data-v="연인·배우자"><span class="chip-icon">💑</span>연인·배우자</div>
+            <div class="chip" data-v="가족"><span class="chip-icon">👨‍👩‍👧</span>가족</div>
+            <div class="chip" data-v="친구"><span class="chip-icon">👫</span>친구</div>
+            <div class="chip" data-v="단체·동호회"><span class="chip-icon">👥</span>단체</div>
+          </div>
+        </div>
+      </div>
+      <div class="nav">
+        <button class="btn btn-back" onclick="prevStep()">← 이전</button>
+        <button class="btn btn-submit" id="submit-btn" onclick="submitForm()">제출하기 🎉</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 제출 중 -->
+  <div class="submit-loading" id="submit-loading">
+    <div class="spinner"></div>
+    <p style="font-size:14px;color:var(--sub);">응답을 저장하고 있어요...</p>
+  </div>
+
+  <!-- 완료 -->
+  <div class="success" id="success">
+    <div class="success-icon">🎉</div>
+    <h2>설문 완료! 감사해요 💛</h2>
+    <p>소중한 의견을 전달받았어요.<br>다음 뉴스레터에 꼭 반영해 볼게요!</p>
+    <div class="success-card">
+      <p>📬 다음 뉴스레터에서 취향 저격 콘텐츠를 기대해 주세요.<br>
+         ❤️ 노랑풍선 뉴스레터를 구독해 주셔서 감사합니다!</p>
+    </div>
+    <a href="https://www.ybtour.co.kr" target="_blank" class="btn-home">노랑풍선 바로가기 →</a>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  ★ 여기를 반드시 수정하세요 ★
+//  Google Apps Script 배포 URL을 붙여넣으세요.
+//  설정 방법은 README.md를 참고하세요.
+// ============================================================
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzV_b9dVJKZzss9E9AWWROtbFk4JAEokDHBeovikcb94fss4AO8_TCS8V8WuPQ4-TbG5A/exec';
+// ============================================================
+
+const TOTAL_STEPS = 4;
+let currentStep = 1;
+let starVal = 0;
+
+// 별점
+document.querySelectorAll('.star').forEach(s=>{
+  s.addEventListener('mouseover',()=>hlStars(+s.dataset.v));
+  s.addEventListener('mouseout',()=>hlStars(starVal));
+  s.addEventListener('click',()=>{
+    starVal=+s.dataset.v;
+    hlStars(starVal);
+    const labels=['','별로예요','조금 아쉬워요','괜찮아요','좋아요!','완전 만족!'];
+    document.getElementById('star-label').textContent=labels[starVal]+' ('+starVal+'점)';
+  });
+});
+function hlStars(v){document.querySelectorAll('.star').forEach(s=>s.classList.toggle('on',+s.dataset.v<=v));}
+
+// 칩 멀티셀렉트
+document.querySelectorAll('#travel-type .chip, #travel-theme .chip, #travel-with .chip').forEach(c=>{
+  c.addEventListener('click',()=>c.classList.toggle('sel'));
+});
+
+function pickChipSingle(el,group){
+  document.querySelectorAll(`[data-group="${group}"]`).forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function pickRadio(row,groupId){
+  document.querySelectorAll(`#${groupId} .radio-row`).forEach(r=>r.classList.remove('sel'));
+  row.classList.add('sel');
+  row.querySelector('input').checked=true;
+}
+
+function updateProgress(){
+  const pct=Math.round(((currentStep-1)/TOTAL_STEPS)*100);
+  document.getElementById('prog-fill').style.width=pct+'%';
+  document.getElementById('prog-txt').textContent=currentStep+' / '+TOTAL_STEPS+'단계';
+  document.getElementById('prog-pct').textContent=pct+'%';
+  document.getElementById('dots').innerHTML=Array.from({length:TOTAL_STEPS},(_,i)=>
+    `<div class="step-dot ${i+1===currentStep?'on':i+1<currentStep?'done':''}"></div>`
+  ).join('');
+}
+
+function showStep(n){
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+  document.getElementById('step-'+n).classList.add('active');
+  currentStep=n;
+  updateProgress();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function nextStep(){if(currentStep<TOTAL_STEPS)showStep(currentStep+1);}
+function prevStep(){if(currentStep>1)showStep(currentStep-1);}
+
+function getChips(id){return[...document.querySelectorAll(`#${id} .chip.sel`)].map(c=>c.dataset.v);}
+function getRadio(name){const r=document.querySelector(`input[name="${name}"]:checked`);return r?r.value:'';}
+function getChipSingle(group){const c=document.querySelector(`[data-group="${group}"].sel`);return c?c.dataset.v:'';}
+
+async function submitForm(){
+  const btn=document.getElementById('submit-btn');
+  btn.disabled=true;
+
+  const resp={
+    id: Date.now(),
+    ts: new Date().toISOString(),
+    travelType: getChips('travel-type').join(', '),
+    travelTheme: getChips('travel-theme').join(', '),
+    contentType: getRadio('ct'),
+    freqPref: getRadio('fp'),
+    satisfaction: starVal||'',
+    freeDest: document.getElementById('free-dest').value.trim(),
+    freeOpinion: document.getElementById('free-opinion').value.trim(),
+    ageGroup: getChipSingle('age'),
+    travelWith: getChips('travel-with').join(', '),
+  };
+
+  // UI 전환 → 로딩
+  document.getElementById('form-wrap').style.display='none';
+  document.getElementById('form-hd').style.display='none';
+  document.getElementById('submit-loading').classList.add('show');
+
+  try{
+    if(APPS_SCRIPT_URL && APPS_SCRIPT_URL !== 'YOUR_APPS_SCRIPT_URL_HERE'){
+      // Google Sheets 전송 (no-cors 사용 → 응답 읽기 불가지만 전송은 됨)
+      await fetch(APPS_SCRIPT_URL, {
+        method:'POST',
+        mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(resp)
+      });
+    } else {
+      // URL 미설정 시 localStorage에 저장 (로컬 테스트용)
+      const all=JSON.parse(localStorage.getItem('yb_survey_responses')||'[]');
+      all.unshift(resp);
+      localStorage.setItem('yb_survey_responses',JSON.stringify(all));
+      await new Promise(r=>setTimeout(r,800)); // 로딩 시뮬레이션
+    }
+  }catch(ex){
+    console.warn('전송 실패, localStorage에 저장:', ex);
+    const all=JSON.parse(localStorage.getItem('yb_survey_responses')||'[]');
+    all.unshift(resp);
+    localStorage.setItem('yb_survey_responses',JSON.stringify(all));
+  }
+
+  document.getElementById('submit-loading').classList.remove('show');
+  document.getElementById('success').classList.add('show');
+}
+
+updateProgress();
+</script>
+</body>
+</html>
